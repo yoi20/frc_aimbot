@@ -24,6 +24,21 @@ class Target:
         self.name = name
         self.height = height
 
+class Robot:
+    def __init__(self, turret_x_offset: float, turret_y_offset:float, turret_z_offset: float, hood_offset_deg: float):
+        self.turret_x_offset = turret_x_offset
+        self.turret_y_offset = turret_y_offset
+        self.turret_z_offset = turret_z_offset
+        self.hood_offset_deg = hood_offset_deg
+
+class ShotState:
+    def __init__(self, v_rad: float, v_tan:float, omega:float, pitch:float, roll:float, distance:float):
+        self.v_rad = v_rad
+        self.v_tan = v_tan
+        self.omega = omega
+        self.pitch = pitch
+        self.roll = roll
+        self.distance = distance
 
 if __name__ == "__main__":
 
@@ -44,6 +59,13 @@ if __name__ == "__main__":
     dump = Target(
         name="dump",
         height=0.97
+    )
+
+    atlas = Robot(
+        turret_x_offset=0.12543,
+        turret_y_offset=0,
+        turret_z_offset=0.2897,
+        hood_offset_deg=46.0
     )
 
     print("")
