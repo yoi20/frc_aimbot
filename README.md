@@ -1,0 +1,1 @@
+my journey in creating a full shot calculator neural network for frc with accelerated moving while shooting support, applicable to any game, complete with a gooey.
