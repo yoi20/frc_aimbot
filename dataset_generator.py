@@ -62,8 +62,8 @@ class DatasetGenerator:
         for _ in range(num_shots):
             base_dist = random.uniform(1.0, 20.0)
             
-            base_rpm = 4000.0
-            base_hood = 5.0
+            base_rpm = np.interp(base_dist, self.static_distances, self.static_rpms)
+            base_hood = np.interp(base_dist, self.static_distances, self.static_hoods)
 
             rpm = base_rpm + random.uniform(-15.0, 15.0)
             hood = base_hood + random.uniform(-0.5, 0.5)
@@ -100,7 +100,11 @@ class DatasetGenerator:
 
             turret_corr = aim_offset - naive_angle
 
-            dataset.append([inputs, labels])
+            inputs = [landing_dist, self.target.height, state.v_rad, state.v_tan, state.omega, state.a_rad, state.a_tan, state.alpha, state.pitch, state.roll]
+
+            labels = [rpm, hood, turret_corr]
+
+            dataset.append(inputs + labels)
 
         return dataset
 
@@ -142,5 +146,7 @@ if __name__ == "__main__":
     generator = DatasetGenerator(engine, hub, fuel_2026)
 
     generator.precompute_static_shots()
+    dataset = generator.generate_reverse_mapping_dataset(100)
+    print(dataset[0])
     
 
