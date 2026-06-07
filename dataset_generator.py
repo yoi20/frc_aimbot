@@ -5,6 +5,7 @@ from models import Environment, GamePiece, Robot, ShotState, Target
 from physics import PhysicsEngine
 from scipy.optimize import minimize as sp_minimize
 import csv
+from tqdm import tqdm
 
 class DatasetGenerator:
     def __init__(self, engine: PhysicsEngine, target: Target, piece: GamePiece):
@@ -56,11 +57,11 @@ class DatasetGenerator:
 
     def generate_reverse_mapping_dataset(self, num_shots: int):
 
-        print(f"generating {num_shots} shots...")
+        # print(f"generating {num_shots} shots...")
 
         dataset = []
 
-        for _ in range(num_shots):
+        for _ in tqdm(range(num_shots), desc="generating dataset"):
             base_dist = random.uniform(1.0, 20.0)
             
             base_rpm = np.interp(base_dist, self.static_distances, self.static_rpms)
@@ -149,7 +150,7 @@ if __name__ == "__main__":
     generator.precompute_static_shots()
     dataset = generator.generate_reverse_mapping_dataset(500000)
     # print(dataset[0])
-    with open("/output/training_data.csv", "w", newline="") as f:
+    with open("output/training_data.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(dataset)
 
