@@ -32,24 +32,24 @@ class DatasetGenerator:
                 roll = 0.0,
                 distance = 0.0
                 )
-                lx, ly = self.engine.simulate_shot(self.piece, shate, rpm=x[0], hood=x[1], aim_offset=0.0, target_z=self.target.height)
+                lx, ly = self.engine.simulate_shot(self.piece, state, rpm=x[0], hood_deg=x[1], aim_offset_rad=0.0, target_z=self.target.height)
                 
                 if lx is None:
                     return 1000000.0
                 
                 dist = math.sqrt(lx**2 + ly**2)
                 miss = dist - target_d
-                miss ** 2
+                return miss ** 2
             
             res = sp_minimize(cost, [prev_rpm, prev_hood], method='Nelder-Mead')
-        winning_rpm = res.x[0]
-        winning_hood = res.x[1]
+            winning_rpm = res.x[0]
+            winning_hood = res.x[1]
 
-        winning_rpm.append(self.static_rpms)
-        winning_hood.append(self.static_hoods)
+            self.static_rpms.append(winning_rpm)
+            self.static_hoods.append(winning_hood)
 
-        prev_rpm = winning_rpm
-        prev_hood = winning_hood
+            prev_rpm = winning_rpm
+            prev_hood = winning_hood
                 
         pass
 
@@ -83,12 +83,64 @@ class DatasetGenerator:
             aim_offset = math.radians(random.uniform(-20, 20))
 
             lx, ly = self.engine.simulate_shot(
-                piece=self.engine.robot,
-                state=state,
-                rpm=rpm,
-                hood_deg=hood,
-                aim_offset_rad=aim_offset
+                piece = self.piece,
+                state = state,
+                rpm = rpm,
+                hood_deg = hood,
+                aim_offset_rad = aim_offset,
+                target_z = self.target.height
             )
 
+            if lx is None:
+                continue
+
+            landing_dist = math.sqrt(lx**2 + ly**2)
+
+            naive_angle = math.atan2(ly, lx)
+
+            turret_corr = aim_offset - naive_angle
+
+            dataset.append([inputs, labels])
+
         return dataset
+
+if __name__ == "__main__":
+    fuel_2026 = GamePiece(
+        name = "2026 Fuel",
+        mass = 0.215,
+        radius = 0.075,
+        area = 0.0177,
+        drag_coeff = 0.5,
+        magnus_coeff = 0.3
+    )
+
+    hub = Target(
+        name = "hub",
+        height = 1.83
+    )
+
+    dump = Target(
+        name = "dump",
+        height = 0.97
+    )
+
+    atlas = Robot(
+        turret_x_offset = 0.12543,
+        turret_y_offset = 0,
+        turret_z_offset = 0.2897,
+        hood_offset_deg = 46.0,
+        system_latency = 0.1
+    )
+
+    calgary = Environment(
+        gravity = 9.81,
+        air_density = 1.14
+    )
+
+    engine = PhysicsEngine(calgary, atlas)
+
+    generator = DatasetGenerator(engine, hub, fuel_2026)
+
+    generator.precompute_static_shots()
+    
 
