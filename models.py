@@ -78,6 +78,6 @@ if __name__ == "__main__":
         system_latency = 0.1
     )
 
-    print("")
-    fuel_2026.print_specs()
+    # print("")
+    # fuel_2026.print_specs()
 
