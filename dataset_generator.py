@@ -4,6 +4,7 @@ import numpy as np
 from models import Environment, GamePiece, Robot, ShotState, Target
 from physics import PhysicsEngine
 from scipy.optimize import minimize as sp_minimize
+import csv
 
 class DatasetGenerator:
     def __init__(self, engine: PhysicsEngine, target: Target, piece: GamePiece):
@@ -146,7 +147,9 @@ if __name__ == "__main__":
     generator = DatasetGenerator(engine, hub, fuel_2026)
 
     generator.precompute_static_shots()
-    dataset = generator.generate_reverse_mapping_dataset(100)
-    print(dataset[0])
-    
+    dataset = generator.generate_reverse_mapping_dataset(500000)
+    # print(dataset[0])
+    with open("/output/training_data.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerows(dataset)
 
