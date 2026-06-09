@@ -36,7 +36,19 @@ def export_binary(model, path):
         for x in scaler_y.scale_:
             f.write(struct.pack('>d', float(x)))
             
-for weights, biases in zip(model.coefs_, model.intercepts_):
-    # to finish later
-    pass
+        for weights, biases in zip(model.coefs_, model.intercepts_):
+            f.write(struct.pack('>i', weights.shape[0]))
+            f.write(struct.pack('>i', weights.shape[1]))
+
+            for w in weights.flatten():
+                f.write(struct.pack('>d', float(w)))
+            
+            for b in biases:
+                f.write(struct.pack('>d', float(b)))
+
+
+export_binary(model, "output/neuralnetwork.bin")
+            
+            
+            
 
