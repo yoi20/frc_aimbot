@@ -1,11 +1,12 @@
 import math
 import random
 import numpy as np
-from models import Environment, GamePiece, Robot, ShotState, Target
-from physics import PhysicsEngine
 from scipy.optimize import minimize as sp_minimize
 import csv
 from tqdm import tqdm
+from config import engine, hub, fuel_2026
+from physics import PhysicsEngine                                                                                                                                                                                                                                         
+from models import Target, GamePiece, ShotState  
 
 class DatasetGenerator:
     def __init__(self, engine: PhysicsEngine, target: Target, piece: GamePiece):
@@ -102,51 +103,37 @@ class DatasetGenerator:
 
             turret_corr = aim_offset - naive_angle
 
-            inputs = [landing_dist, self.target.height, state.v_rad, state.v_tan, state.omega, state.a_rad, state.a_tan, state.alpha, state.pitch, state.roll]
+            turret_corr = (turret_corr + math.pi) % (2 * math.pi) - math.pi
+
+            cos_a = lx / landing_dist                                                                                                                                                                                                                                    
+            sin_a = ly / landing_dist                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                             
+            v_rad_eff = state.v_rad * cos_a + state.v_tan * sin_a                                                                                                                                                                                                        
+            v_tan_eff = -state.v_rad * sin_a + state.v_tan * cos_a                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                             
+            a_rad_eff = state.a_rad * cos_a + state.a_tan * sin_a                                                                                                                                                                                                        
+            a_tan_eff = -state.a_rad * sin_a + state.a_tan * cos_a
+
+            inputs = [landing_dist, self.target.height, v_rad_eff, v_tan_eff, state.omega, a_rad_eff, a_tan_eff, state.alpha, state.pitch, state.roll]
 
             labels = [rpm, hood, turret_corr]
+
+        
+            # throw away bad shots from dataset
+
+            if landing_dist < 0.5 or landing_dist > 16.0:
+                continue
+
+            if abs(turret_corr) > math.radians(35):
+                continue
+
 
             dataset.append(inputs + labels)
 
         return dataset
 
 if __name__ == "__main__":
-    fuel_2026 = GamePiece(
-        name = "2026 Fuel",
-        mass = 0.215,
-        radius = 0.075,
-        area = 0.0177,
-        drag_coeff = 0.5,
-        magnus_coeff = 0.3
-    )
-
-    hub = Target(
-        name = "hub",
-        height = 1.83
-    )
-
-    dump = Target(
-        name = "dump",
-        height = 0.97
-    )
-
-    atlas = Robot(
-        turret_x_offset = 0.12543,
-        turret_y_offset = 0,
-        turret_z_offset = 0.2897,
-        hood_offset_deg = 46.0,
-        system_latency = 0.1
-    )
-
-    calgary = Environment(
-        gravity = 9.81,
-        air_density = 1.14
-    )
-
-    engine = PhysicsEngine(calgary, atlas)
-
     generator = DatasetGenerator(engine, hub, fuel_2026)
-
     generator.precompute_static_shots()
     dataset = generator.generate_reverse_mapping_dataset(500000)
     # print(dataset[0])
