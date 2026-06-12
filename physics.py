@@ -45,6 +45,11 @@ class PhysicsEngine:
     def simulate_rk4(self, piece:GamePiece, x:float, y:float, z:float, vx:float, vy:float, vz:float, omega:float, pitch:float, roll:float, time_step:float, target_z:float):
         h = time_step
         while z > 0:
+
+            last_x = x
+            last_y = y
+            last_z = z
+
             k1_ax, k1_ay, k1_az = self.calculate_acceleration(piece, vx, vy, vz, omega, pitch, roll)
             
             vx2 = vx + h * k1_ax / 2
@@ -70,8 +75,15 @@ class PhysicsEngine:
             vy += (h / 6) * (k1_ay + 2*k2_ay + 2*k3_ay + k4_ay)
             vz += (h / 6) * (k1_az + 2*k2_az + 2*k3_az + k4_az)
 
-            if vz < 0 and z<= target_z:
-                return x, y
+            if vz < 0 and z<= target_z and last_z > target_z:
+                dz = last_z - z
+                if dz > 1e-6:
+                    frac = (last_z - target_z) / dz
+                    lx = last_x + frac * (x - last_x)
+                    ly = last_y + frac * (y - last_y)
+                    return lx, ly
+                else:
+                    return x, y
             
         return x, y
 
@@ -81,8 +93,12 @@ class PhysicsEngine:
         real_v_tan = state.v_tan + (state.a_tan * lat)
         real_omega = state.omega + (state.alpha * lat)
         
+        # speed and spin polynomials
         surface_vel = -4.18e-07 * rpm**2 + 4.75e-03 * rpm - 5.18
         spin = 7.27e-08 * rpm**2 - 6.12e-03 * rpm - 3.64
+        
+        if surface_vel <= 0:
+            return None, None
         
         phi = math.radians(self.robot.hood_offset_deg + hood_deg)
 

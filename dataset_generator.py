@@ -41,8 +41,10 @@ class DatasetGenerator:
                     return 1000000.0
                 
                 dist = math.sqrt(lx**2 + ly**2)
-                miss = dist - target_d
-                return miss ** 2
+                miss = (dist - target_d) ** 2
+                smooth = 1e-6 * ((x[0] - prev_rpm)**2 + 1e4 * (x[1] - prev_hood)**2)
+                low_rpm_penalty = 1e-7 * x[0]**2
+                return miss + smooth + low_rpm_penalty
             
             res = sp_minimize(cost, [prev_rpm, prev_hood], method='Nelder-Mead')
             winning_rpm = res.x[0]
